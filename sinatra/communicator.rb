@@ -26,10 +26,6 @@ class Communicator
     end
   end
 
-  def set_frame (frameData)
-    @frame_buffer = frameData
-  end
-
   def set_lamp (id, value)
     @frame_buffer[id] = value
   end
@@ -46,12 +42,20 @@ class Communicator
     @frame_buffer
   end
 
+  #FIXME the packed data format is still to be checked against the arduino source
   def send_frame ()
-
+    frame_data_packed = Array.new()
+    for (i=0; i<4; i++)
+      frame_data_packed[i] = 0
+      for (j=0; j<8; j++)
+        frame_data_packed[i] |= @frame_buffer[i*8+j]<<j
+      end
+    end
+    #FIXMe
   end
 
   def poll_switches ()
-
+    #FIXME
   end
 
   def set_meter(id, value)
