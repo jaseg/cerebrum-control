@@ -10,8 +10,9 @@ require 'rubygems'
 require 'serialport'
 
 #possibly 20fps is a bit too much here...
-FRAME_RATE = 20 unless FRAME_RATE
+FRAME_RATE = 20
 
+#FIXME the command chars need to be checked
 class Communicator
 
   def initialize (port)
@@ -44,14 +45,15 @@ class Communicator
 
   #FIXME the packed data format is still to be checked against the arduino source
   def send_frame ()
-    frame_data_packed = Array.new()
-    for (i=0; i<4; i++)
-      frame_data_packed[i] = 0
-      for (j=0; j<8; j++)
-        frame_data_packed[i] |= @frame_buffer[i*8+j]<<j
-      end
+		@sp.write("b")
+    for i in 0..3 do
+      frame_data_packed = 0
+      for j in 0..7 do
+        frame_data_packed |= @frame_buffer[i*8+j]<<j
+			end
+			@sp.write(frame_data_packed);
     end
-    #FIXMe
+		@sp.flush()
   end
 
   def poll_switches ()
@@ -59,6 +61,9 @@ class Communicator
   end
 
   def set_meter(id, value)
-    send_command ("m" id value)
+		@sp.write("m")
+		@sp.write(id)
+		@sp.write(value)
+		@sp.flush()
   end
 end
