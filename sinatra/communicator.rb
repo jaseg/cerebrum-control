@@ -16,19 +16,19 @@ FRAME_RATE = 20
 class Communicator
 
   def initialize (port)
-    @sp = SerialPort.new(port, 115200)
-    @frame_buffer = Array.new()
-    Thread.start do
+    @sp = SerialPort.new(port, 57600)
+    @frame_buffer = Array.new(32, 0)
+    Thread.new {
       while true
         send_frame
         poll_switches
         sleep 1.0/FRAME_RATE
       end
-    end
+    }
   end
 
   def set_lamp (id, value)
-    @frame_buffer[id] = value
+    @frame_buffer[id] = value == 0 ? 0:1
   end
 
   def get_lamp (id)
@@ -45,15 +45,15 @@ class Communicator
 
   #FIXME the packed data format is still to be checked against the arduino source
   def send_frame ()
-		@sp.write("b")
+    @sp.write("b")
     for i in 0..3 do
       frame_data_packed = 0
       for j in 0..7 do
         frame_data_packed |= @frame_buffer[i*8+j]<<j
-			end
-			@sp.write(frame_data_packed);
+      end
+      @sp.write(frame_data_packed.chr);
     end
-		@sp.flush()
+    @sp.flush()
   end
 
   def poll_switches ()

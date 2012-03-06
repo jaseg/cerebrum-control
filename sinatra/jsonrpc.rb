@@ -13,13 +13,13 @@ class JSONRPCInterface
 	def handle_request (params_string)
 		params = JSON.parse(params_string)
 		begin
-			return {"result" => @registered_methods[params["method"]].call (params["params"])
+			return {"result" => @registered_methods[params["method"]].call(*params["params"]),
 							"error" => nil,
-							"id" => params["id"]};
+							"id" => params["id"]}.to_json;
 		rescue
 			return {"result" => nil,
 							"error" => $!,
-							"id" => params["id"]};
+							"id" => params["id"]}.to_json;
 		end
 	end
 end
