@@ -28,7 +28,11 @@ class Communicator
   end
 
   def set_lamp (id, value)
-    @frame_buffer[id] = value == 0 ? 0:1
+    if value == 0 or value.nil? or value == false
+      @frame_buffer[id] = 0
+    else
+      @frame_buffer[id] = 1
+    end
   end
 
   def get_lamp (id)
