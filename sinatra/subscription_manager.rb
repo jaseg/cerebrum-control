@@ -1,6 +1,7 @@
 require 'mongoid'
 
 class SubscriptionManager
+  attr_accessor :sources
   def initialize (com)
     @com = com
     @sources = Array.new

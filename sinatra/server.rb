@@ -66,6 +66,14 @@ post '/subscriptions' do
   end
 end
 
+get '/subscriptions' do
+  sub.sources.to_json
+end
+
+delete '/subscription/:id' do |id|
+  sub.sources.delete_if{|src| src._id.to_s == id}.to_json
+end
+
 
 post '/jsonrpc' do
 	request.body.rewind
