@@ -43,31 +43,41 @@ class Communicator
     @frame_buffer = buffer
   end
 
+  def flash_lamp(id, duration)
+    @frame_buffer[id] = (-duration*FRAME_RATE).to_i
+  end
+
   def get_lamps ()
     @frame_buffer
   end
 
+=begin
   #FIXME the packed data format is still to be checked against the arduino source
   def send_frame ()
     @sp.write("b")
-    for i in 0..3 do
+    for i in 0..3
       frame_data_packed = 0
-      for j in 0..7 do
-        frame_data_packed |= @frame_buffer[i*8+j]<<j
+      for j in 0..7
+        index = i*8+j
+        if @frame_buffer[index] < 0
+          @frame_buffer[index]++
+        end
+        frame_data_packed |= ((@frame_buffer[index] == 0)?0:1)<<j
       end
       @sp.write(frame_data_packed.chr);
     end
     @sp.flush()
   end
+=end
 
   def poll_switches ()
     #FIXME
   end
 
-  def set_meter(id, value)
-		@sp.write("m")
-		@sp.write(id)
-		@sp.write(value)
-		@sp.flush()
+  def set_meter (id, value)
+    @sp.write("m")
+    @sp.write(id)
+    @sp.write(value)
+    @sp.flush()
   end
 end

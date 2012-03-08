@@ -5,11 +5,11 @@ require 'sinatra'
 require 'json'
 require File.dirname(__FILE__)+'/communicator.rb'
 require File.dirname(__FILE__)+'/jsonrpc.rb'
-require File.dirname(__FILE__)+'/subscription_manager.rb'
+require File.dirname(__FILE__)+'/subscription.rb'
 
 enable :lock
 outcom = Communicator.new("/dev/arduino1")
-sub = SubscriptionManager.new(outcom)
+subs = Array.new
 json_rpc_if = JSONRPCInterface.new()
 
 json_rpc_if.register("set_lamp", outcom.method("set_lamp"))
@@ -56,10 +56,11 @@ end
 post '/subscriptions' do
   request.body.rewind
   body = JSON.parse request.body.read
-  if body["description"] and body["destination"] and body["url"] and body["handler"] and body["poll_interval"]
-    src = Source.new(body)
-    sub << src
-    print "Added source #{src.description}\n"
+  if body["description"] and body["destination"] and body["handler"]
+    body["com"] = outcom
+    sub = Subscription.handlers[body["handler"]].new(body)
+    print "Added subscription #{sub.description}\n"
+    subs << sub
     return '{"success":42}'
   else
     return '{"error": "Parameter missing"}'
