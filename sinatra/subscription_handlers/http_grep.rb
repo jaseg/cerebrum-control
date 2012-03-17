@@ -7,6 +7,12 @@ class HTTPGrepHandler < Subscription
   attr_accessor :url
   attr_accessor :regex
 
+  def initialize(args)
+    super(args)
+    puts "http-egrep subscription initalized"
+    raise ArgumentError.new "Missing required Parameters" unless @url and @regex
+  end
+
   def poll ()
     uri = URI(url)
     str = Net::HTTP.get(uri)
@@ -17,5 +23,12 @@ class HTTPGrepHandler < Subscription
     end
   end
 
+  def self.params ()
+    ["url", "regex"]
+  end
+
+  def type ()
+    "http-egrep"
+  end
   @@handlers["http-egrep"] = self
 end

@@ -51,7 +51,6 @@ class Communicator
     @frame_buffer
   end
 
-=begin
   #FIXME the packed data format is still to be checked against the arduino source
   def send_frame ()
     @sp.write("b")
@@ -60,7 +59,7 @@ class Communicator
       for j in 0..7
         index = i*8+j
         if @frame_buffer[index] < 0
-          @frame_buffer[index]++
+          @frame_buffer[index] += 1
         end
         frame_data_packed |= ((@frame_buffer[index] == 0)?0:1)<<j
       end
@@ -68,7 +67,6 @@ class Communicator
     end
     @sp.flush()
   end
-=end
 
   def poll_switches ()
     #FIXME
