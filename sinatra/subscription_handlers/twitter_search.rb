@@ -15,7 +15,7 @@ class TwitterHandler < Subscription
     raise ArgumentError.new "Missing required Parameters" unless @keyword
     Thread.new do
       print "Twitter subscription: Beginning to watch for #{@keyword}\n"
-      TweetStream::Client.new.track(@keyword) do |status|
+      TweetStream::Client.new.track(@keyword) do |status, client|
         print "Twitter event: @#{status.user.screen_name}: #{status.text}\n"
         @com.flash_lamp(@destination, @flash_duration)
       end

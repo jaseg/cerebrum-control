@@ -1,0 +1,150 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Cerebrum Cluster Control</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <style>
+      body {
+        padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="tabbable">
+      <div class="navbar navbar-fixed-top">
+        <div class="navbar-inner">
+          <div class="container">
+            <a class="brand" href="#">Cerebrum Cluster Subscription Management</a>
+            <div class="nav-collapse">
+              <ul class="nav nav-tabs">
+                <li class="active"><a href="#lamps">Lamps</a></li>
+                <li><a href="#meters">Meters</a></li>
+                <li><a href="#switches">Switches</a></li>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="container">
+        <div class="hero-unit">
+          <div class="tab-content">
+            <div class="tab-pane active" id="lamps">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Lamp</th>
+                    <th>Description</th>
+                    <th>Type</th>
+                    <th>Matches</th>
+                  </tr>
+                </thead>
+                <tbody id="lamps-table-body">
+                </tbody>
+              </table>
+              <a class="btn" id="addsubscription">Add Subscription</a>
+              <div id="subscriptionform">
+                <form id="lamp-sub-add-form" class="well">
+                  <label for="lamp-sub-id">Lamp</label><input type="text" class="span1" placeholder="Lamp" name="destination" id="lamp-sub-id">
+                  <label for="lamp-sub-description">Description</label><input type="text" class="span3" placeholder="Description" name="description" id="lamp-sub-description">
+                  <label for="lamp-sub-type">Type</label><select name="type" id="lamp-sub-type"></select>
+                  <div id="lamp-sub-custom-fields">
+                  </div>
+                  <button id="lamp-sub-add-button" class="btn">Add</button>
+                </form>
+              </div>
+            </div>
+            <div class="tab-pane" id="meters">
+              <h1>Not yet implemented</h1>
+            </div>
+            <div class="tab-pane" id="switches">
+              <h1>Not yet implemented</h1>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="js/jquery.js"></script>
+    <script src="js/bootstrap-tab.js"></script>
+    <script src="js/bootstrap-button.js"></script>
+    <script type="text/javascript">
+      function formDataToJSON(formData){
+        var postData = '{';
+        for(var i in formData){
+          if(i != 0) postData += ',';
+          postData += '"';
+          postData += formData[i].name;
+          postData += '":"';
+          postData += formData[i].value;
+          postData += '"';
+        }
+        return postData + '}';
+      }
+
+      function add_subscription(){
+        $.post('subscriptions', formDataToJSON($('#lamp-sub-add-form').serializeArray()), function(result){
+            console.log("Posted a new subscription: ", result);
+            refresh_subscriptions();
+          });
+        $("#subscriptionform").hide();
+        $("#addsubscription").show();
+        return false;
+      }
+
+      function subscription_refresh_custom_fields(){
+        $.getJSON('/subscription/type/'+$('#lamp-sub-type').val()+'/params', function(data){
+            $('#lamp-sub-custom-fields').empty();
+            for(var i in data){
+              var field = $('<div>');
+              field.append($('<label>').attr('for', 'lamp-sub-custom-field-'+data[i]).text(data[i]));
+              field.append($('<input>').attr('type', 'text').attr('placeholder', data[i]).attr('name', data[i]).attr('id', 'lamp-sub-custom-field-'+data[i]));
+              $('#lamp-sub-custom-fields').append(field);
+            }
+          });
+      }
+
+      function refresh_subscriptions(){
+        $.getJSON('/subscriptions', function(data){
+            $('lamps-table-body').empty();
+            for(var i in data){
+              var newrow = $('<tr>');
+              newrow.append($('<td>').text(data[i].destination));
+              newrow.append($('<td>').text(data[i].description));
+              newrow.append($('<td>').text(data[i].type));
+              var matches = '';
+              for(var j in data[i].matches){
+                matches += j + ': ' + data[i].matches[j]+' ';
+              }
+              newrow.append($('<td>').text(matches));
+              $('lamps-table-body').append(newrow);
+            }
+          });
+      }
+      
+      function refresh_subscription_types(){
+        $.getJSON('/subscription/types', function(data){
+            $('#lamp-sub-type').empty();
+            for(var i in data){
+              $('#lamp-sub-type').append($("<option>").text(data[i]));
+            }
+            subscription_refresh_custom_fields();
+          });
+      }
+
+      function init(){
+        refresh_subscriptions();
+        refresh_subscription_types();
+        $('#subscriptionform').hide();
+        $('#addsubscription').click(function(){
+            $("#addsubscription").hide();
+            $("#subscriptionform").show();
+          });
+        $('#lamp-sub-type').change(subscription_refresh_custom_fields);
+        $('#lamp-sub-add-form').submit(add_subscription);
+      }
+    
+      init();
+    </script>
+  </body>
+</html>
