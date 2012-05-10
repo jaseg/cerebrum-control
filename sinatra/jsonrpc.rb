@@ -1,7 +1,8 @@
 
 require 'json'
+require 'net/http'
 
-class JSONRPCInterface
+class JSONRPCServer
 	def initialize ()
 		@registered_methods = Hash.new()
 	end
@@ -22,4 +23,19 @@ class JSONRPCInterface
 							"id" => params["id"]}.to_json;
 		end
 	end
+end
+
+#CAUTION! responds_to does *NOT* work on a json-rpc-client.
+class JSONRPCClient
+  def initialize (host, port, path="/")
+    @host, @port, @path = host, port, path
+  end
+
+  def method_missing (method, *params, &block)
+    rq = Net::HTTP.new(@host, @port)
+    data = {"method" => method, "params" => params, "id" => "foo"}.to_json
+    res = JSON.parse rq.post(@path, data).body
+    raise Error(res["error"]) if res["error"]
+    return res["result"]
+  end
 end

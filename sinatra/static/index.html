@@ -51,6 +51,7 @@
                   <label for="lamp-sub-type">Type</label><select name="type" id="lamp-sub-type"></select>
                   <div id="lamp-sub-custom-fields">
                   </div>
+                  <button id="lamp-sub-clear" class="btn">Clear</button>
                   <button id="lamp-sub-add-button" class="btn">Add</button>
                 </form>
               </div>
@@ -69,17 +70,26 @@
     <script src="js/bootstrap-tab.js"></script>
     <script src="js/bootstrap-button.js"></script>
     <script type="text/javascript">
+
+      function JSONEscape(str){
+        return str.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
+      }
+
       function formDataToJSON(formData){
         var postData = '{';
         for(var i in formData){
           if(i != 0) postData += ',';
           postData += '"';
-          postData += formData[i].name;
+          postData += JSONEscape(formData[i].name);
           postData += '":"';
-          postData += formData[i].value;
+          postData += JSONEscape(formData[i].value);
           postData += '"';
         }
         return postData + '}';
+      }
+
+      function clearForm(jq){
+        jq.each(function(elem){if(elem.val){elem.val('');}});
       }
 
       function add_subscription(){
@@ -87,6 +97,7 @@
             console.log("Posted a new subscription: ", result);
             refresh_subscriptions();
           });
+        clearForm($('#lamp-sub-add-form'));
         $("#subscriptionform").hide();
         $("#addsubscription").show();
         return false;
@@ -97,8 +108,10 @@
             $('#lamp-sub-custom-fields').empty();
             for(var i in data){
               var field = $('<div>');
-              field.append($('<label>').attr('for', 'lamp-sub-custom-field-'+data[i]).text(data[i]));
-              field.append($('<input>').attr('type', 'text').attr('placeholder', data[i]).attr('name', data[i]).attr('id', 'lamp-sub-custom-field-'+data[i]));
+              var name = data[i].name;
+              var default_val = data[i].default_val;
+              field.append($('<label>').attr('for', 'lamp-sub-custom-field-'+name).text(name));
+              field.append($('<input>').attr('type', 'text').attr('name', name).attr('id', 'lamp-sub-custom-field-'+name).val(default_val));
               $('#lamp-sub-custom-fields').append(field);
             }
           });
@@ -106,7 +119,7 @@
 
       function refresh_subscriptions(){
         $.getJSON('/subscriptions', function(data){
-            $('lamps-table-body').empty();
+            $('#lamps-table-body').empty();
             for(var i in data){
               var newrow = $('<tr>');
               newrow.append($('<td>').text(data[i].destination));
@@ -117,7 +130,7 @@
                 matches += j + ': ' + data[i].matches[j]+' ';
               }
               newrow.append($('<td>').text(matches));
-              $('lamps-table-body').append(newrow);
+              $('#lamps-table-body').append(newrow);
             }
           });
       }
@@ -142,8 +155,11 @@
           });
         $('#lamp-sub-type').change(subscription_refresh_custom_fields);
         $('#lamp-sub-add-form').submit(add_subscription);
+        $('#lamp-sub-clear').click(function (){
+            clearForm($('#lamp-sub-add-form'));
+          });
       }
-    
+      
       init();
     </script>
   </body>

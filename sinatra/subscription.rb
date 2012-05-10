@@ -1,25 +1,47 @@
+require 'mongo'
 require 'mongoid'
 
-class Subscription
-#  include Mongoid::Document
-#  field :description,   type: String
-#  field :destination,   type: Integer
-  attr_accessor :description
-  attr_accessor :destination
+subdb = Mongo::Connection.new.db("cerebrum")
+subcoll = subdb["subscriptions"]
 
-  def initialize (args)
-    #FIXME Whitelist that shit! (security, anyone?)
-    args.each do |key,val|
-      instance_variable_set "@#{key}", val unless val.nil?
-    end if args.is_a? Hash
-    raise ArgumentError.new "Missing required parameters" unless @description and @destination
-  end
+class Subscription
+  include Mongoid::Callbacks
+  include Mongoid::Dirty
+  include Mongoid::Fields
+  field :description,   type: String
+  field :destination,   type: Integer
+  after_initialize :store_to_db
   @@handlers = Hash.new()
-  def self.handlers ()
+
+  def self.com=(com)
+    @@com = com
+  end
+
+  def self.load_from_db ()
+    subcoll.find.each do |doc|
+     doc._id 
+    end
+  end
+
+  def store_to_db ()
+    subcoll.insert(self.attributes)
+  end
+
+  def self.handlers
     @@handlers
   end
-  def self.params ()
-    nil
+
+  def self.type
+    @type
+  end
+
+  def self.handler_name(name)
+    @@handlers[name] = self
+    @type = name
+  end
+
+  def self.params()
+    fields.delete_if{|fieldname,value|fieldname =~ /^_/ or ["description", "destination", "com"].include? fieldname}
   end
 end
 
