@@ -39,15 +39,17 @@ class Communicator
     Thread.new { #device => host comm
       sleep 1.0
       while true
-        #line = @sp.readline()
-        line = "RF24 RECV 1A17181E: 0004181F (255)"
+        line = @sp.readline()
         process_command(line)
-        sleep 10.0
       end
     }
     Thread.new { #Status display
       while true
-        print "\nSTATUS: Last r0ket seen #{Time.now.tv_sec - @lastr0ket_ts}s ago. Last 5 r0ket ids: #{@lastr0kets}\n"
+        if @lastr0ket_ts == 0
+          print "\nSTATUS: Never ever saw a r0ket!\n"
+        else
+          print "\nSTATUS: Last r0ket seen #{Time.now.tv_sec - @lastr0ket_ts}s ago. Last 5 r0ket ids: #{@lastr0kets}\n"
+        end
         for i in 0...32
           print "(#{@frame_buffer[i]})#{@frame_buffer_timeouts[i] == 0?"*":" "} "
         end
@@ -131,6 +133,8 @@ class Communicator
   end
 
   def process_command (line)
+    #Format example:
+    #line = "RF24 RECV 1A17181E: 0004181F (255)"
     md = /RF24 RECV ([0-9A-F]*): ([0-9A-F]*) \(([0-9]*)\)/.match(line)
     if md
       #print "r0ket seen: id #{md[1]} sequence #{md[2]} strength #{md[3]}\n"

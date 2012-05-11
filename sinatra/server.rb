@@ -7,10 +7,14 @@ require File.dirname(__FILE__)+'/subscription.rb'
 
 set :public_folder, File.dirname(__FILE__) + '/static'
 
+subdb = Mongo::Connection.new.db("cerebrum")
+subcoll = subdb["subscriptions"]
+
 enable :lock
 outcom = JSONRPCClient.new("10.0.1.27", 4567, "/jsonrpc")
 Subscription.com = outcom
-Subscription.load_from_db
+Subscription.subcoll = subcoll
+subs = Subscription.load_from_db
 
 get '/' do
   send_file "static/index.html"
@@ -31,10 +35,10 @@ post '/subscriptions' do
   begin
     body = JSON.parse request.body.read
     begin
-      puts Subscription.handlers[body["type"]]
-      sub = Subscription.handlers[body["type"]].create!(body)
-      puts outcom
-      sub.com = outcom
+      #puts Subscription.handlers[body["type"]]
+      #sub = Subscription.handlers[body["type"]].create!(body)
+      sub = Subscription.handlers[body["type"]].new(body)
+      #sub.com = outcom
       subs << sub
       print "Added #{body["type"]} subscription #{body["description"]} on lamp #{body["destination"]}\n"
       return '{"success":42}'

@@ -1,30 +1,48 @@
 require 'mongo'
 require 'mongoid'
 
-subdb = Mongo::Connection.new.db("cerebrum")
-subcoll = subdb["subscriptions"]
-
 class Subscription
+  include ActiveModel::MassAssignmentSecurity
+  include Mongoid::Threaded::Lifecycle
+  include Mongoid::Attributes
   include Mongoid::Callbacks
   include Mongoid::Dirty
   include Mongoid::Fields
-  field :description,   type: String
-  field :destination,   type: Integer
-  after_initialize :store_to_db
+  include Mongoid::Relations
+  include Mongoid::NestedAttributes
+  field :description, type: String
+  field :destination, type: Integer
   @@handlers = Hash.new()
+
+  def initialize(attrs)
+    @attributes ||= {}
+    assign_attributes(attrs)
+    store_to_db
+  end
 
   def self.com=(com)
     @@com = com
   end
 
+  def new? ()
+    false
+  end
+
+  def self.subcoll=(subcoll)
+    @@subcoll=subcoll
+  end
+
   def self.load_from_db ()
-    subcoll.find.each do |doc|
-     doc._id 
+    subs = []
+    @@subcoll.find.each do |doc|
+      #puts doc
+      subs << @@handlers[doc["type"]].new(doc)
     end
+    subs
   end
 
   def store_to_db ()
-    subcoll.insert(self.attributes)
+    @@subcoll.insert(self.attributes)
   end
 
   def self.handlers
@@ -41,7 +59,7 @@ class Subscription
   end
 
   def self.params()
-    fields.delete_if{|fieldname,value|fieldname =~ /^_/ or ["description", "destination", "com"].include? fieldname}
+    fields.delete_if{|item| item =~ /^_/ or ["description", "destination", "com"].include? item}
   end
 end
 

@@ -8,17 +8,23 @@ class Twitter::JSONStream
     begin
       @parser << data
     rescue
-      puts data
-      puts "Caught a parsing error parsing the twitter stream"
+      #puts data
+      #puts "Caught a parsing error parsing the twitter stream"
+      #puts "Since that would not be that constructive, I will kindly not exit now."
     end
   end
 end
 
 class TwitterHandler < Subscription
-  field :flash_duration,    type: Integer, default: 0.5
-  after_initialize  :insert_keyword
+  field :flash_duration, type: Float, default: 0.5
+  field :keyword, type: String
 
   handler_name "twitter"
+
+  def initialize(attrs)
+    super(attrs)
+    insert_keyword
+  end
 
   @@keywords = Hash.new
   TweetStream.configure do |config|
@@ -40,13 +46,19 @@ class TwitterHandler < Subscription
     end
     Thread.new do
       @@client_lock.synchronize {
-        @@client.close_connection if @@client
+        puts "Watching on twitter for #{@@keywords.keys}"
+        if @@client
+           @@client.close_connection
+        else
+          #EEEVIL RACE CONDITION WAITING TO EAT UR BRAINZ
+          sleep 5.0
+        end
         @@client = TweetStream::Client.new unless @@client
         @@client.on_error do |message|
           puts "Twitter stream error: #{message}"
         end.track(@@keywords.keys) do |status|
           @@keywords.each_pair do |keyword, handler|
-            handler.call if status.user.screen_name.downcase.include?(keyword.downcase) || status.text.downcase.include?(keyword.downcase)
+            #handler.call if status.user.screen_name.downcase.include?(keyword.downcase) || status.text.downcase.include?(keyword.downcase)
           end
         end
       }

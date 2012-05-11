@@ -35,7 +35,7 @@ class JSONRPCClient
     rq = Net::HTTP.new(@host, @port)
     data = {"method" => method, "params" => params, "id" => "foo"}.to_json
     res = JSON.parse rq.post(@path, data).body
-    raise Error(res["error"]) if res["error"]
+    raise Exception.new(res["error"]) if res["error"]
     return res["result"]
   end
 end
